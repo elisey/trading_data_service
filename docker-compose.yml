@@ -1,0 +1,41 @@
+version: '3'
+
+services:
+  clickhouse:
+    image: yandex/clickhouse-server:21.3.20.1
+    container_name: clickhost_storage
+    ports:
+      - 8123:8123
+      - 9000:9000
+    env_file:
+      - .env
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+
+  generator_service:
+    build:
+      context: generator_service
+      dockerfile: Dockerfile
+    container_name: generator_service
+    env_file:
+      - .env
+    depends_on:
+     - clickhouse
+
+  grafana:
+    image: grafana/grafana:8.4.4
+    container_name: grafana
+    ports:
+      - 3000:3000
+    env_file:
+      - .env
+    environment:
+      - GF_INSTALL_PLUGINS=grafana-clickhouse-datasource
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - clickhouse
+
+
+volumes:
+  clickhouse-data:
